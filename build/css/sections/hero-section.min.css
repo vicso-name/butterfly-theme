@@ -1,0 +1,14 @@
+.topsection {
+  font-family: "Courier New", Courier, monospace;
+  outline: none;
+}
+
+.hero-title {
+  font-weight: 700;
+  font-size: 90px;
+}
+
+p {
+  font-style: normal;
+  font-size: 60px;
+}

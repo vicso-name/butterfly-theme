@@ -111,24 +111,10 @@ function add_opengraph_meta_tags() {
 }
 add_action('wp_head', 'add_opengraph_meta_tags', 5);
 
-// Add ACF option pages
-if (function_exists('acf_add_options_page')) {
-    acf_add_options_page(array(
-        'page_title'    => 'Theme Options',
-        'menu_title'    => 'Theme Settings',
-        'menu_slug'     => 'theme-general-settings',
-        'capability'    => 'edit_posts',
-    ));
-
-    acf_add_options_sub_page(array(
-        'page_title'    => 'Projects Settings',
-        'menu_title'    => 'Projects Settings',
-        'parent_slug'   => 'edit.php?post_type=project',
-    ));
-}
 
 // Add custom body classes
 add_filter('body_class', 'add_custom_body_class');
+
 function add_custom_body_class($classes) {
     if (is_post_type_archive('project') || is_tax('project_category') || is_singular('project')) {
         $classes[] = 'color-theme-black';
@@ -153,33 +139,79 @@ function get_template_page_id($template_name = '') {
     return !empty($pages->posts[0]) ? $pages->posts[0] : '';
 }
 
-// Customize project post type archive query
-add_action('pre_get_posts', 'customize_project_archive_query');
-function customize_project_archive_query($query) {
-    if ($query->is_main_query() && !is_admin() && $query->is_post_type_archive('project')) {
-        $query->set('posts_per_page', -1);
-    }
+// Allow SVG
+function add_file_types_to_uploads($file_types){
+	$new_filetypes = array();
+	$new_filetypes['svg'] = 'image/svg+xml';
+	$file_types = array_merge($file_types, $new_filetypes );
+	return $file_types;
+}
+add_filter('upload_mimes', 'add_file_types_to_uploads');
+
+
+// Nen logo login Page
+
+add_action( 'login_head', 'true_change_login_logo' );
+ 
+function true_change_login_logo() {
+	echo '<style>
+	#login h1 a{
+		background-image : url(' . get_stylesheet_directory_uri() . '/assets/img/login-logo.jpg);
+	}
+	</style>';
 }
 
-function register_acf_front_page_block() {
-    acf_register_block_type(array(
-        'name'              => 'main_flexible_builder',
-        'title'             => __('Main Page Builder'),
-        'description'       => __('The custom builder for creating the main page structure'),
-        'render_callback'   => 'render_acf_front_page_block',
-        'category'          => 'formatting',
-        'icon'              => 'forms',
-        'keywords'          => array('main', 'builder', 'structure'),
-    ));
-}
+add_filter('jpeg_quality', function($arg){return 100;});
 
-function render_acf_front_page_block($block) {
-    if (is_page_template('templates/front-page.php')) {
-        include get_template_directory() . '/template-parts/blocks/front-page-builder/front-page-builder.php';
-    } else {
-        echo '<p>I\'m sorry, but this block\'s structure shows only on the front-page template.</p>';
-        return;
-    }
-}
 
-add_action('acf/init', 'register_acf_front_page_block');
+// Disable WordPress' automatic image scaling feature
+add_filter( 'big_image_size_threshold', '__return_false' );
+
+
+add_filter( 'rank_math/frontend/breadcrumb/args', function( $args ) {
+  $args = array(
+    'delimiter'   => '&nbsp;/&nbsp;',
+    'wrap_before' => '<nav class="rank-math-breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">',
+    'wrap_after'  => '</nav>',
+    'before'      => '<span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">',
+    'after'       => '</span>',
+  );
+  return $args;
+});
+
+
+add_filter( 'rank_math/frontend/breadcrumb/html', function( $html, $crumbs, $class ) {
+    ob_start(); 
+?>
+    <nav class="mkdf-container-inner breadcrumbs rank-math-breadcrumb" itemscope="" itemtype="https://schema.org/BreadcrumbList">
+        <?php 
+        $iii = 0;
+        $summ = count($crumbs);
+        foreach ($crumbs as $key => $crumb) {
+            $iii++;
+            ?>
+            <?php if ($iii == $summ) { ?>
+                <span itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem">
+                    <span class="last" itemprop="name"><?php echo esc_html($crumb[0]); ?></span>
+                    <meta itemprop="position" content="<?php echo esc_attr($iii); ?>" />
+                </span>
+            <?php } else { ?>
+                <span itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem">
+                    <a itemprop="item" href="<?php echo esc_url($crumb[1]); ?>">
+                        <span itemprop="name"><?php echo esc_html($crumb[0]); ?></span>
+                    </a>
+                    <meta itemprop="position" content="<?php echo esc_attr($iii); ?>" />
+                </span>
+                <span class="separator"> / </span>
+            <?php } ?>
+        <?php } ?>
+    </nav>
+<?php
+    return ob_get_clean();
+}, 10, 3);
+
+
+
+function is_blog () {
+    return ( is_archive() || is_author() || is_category() || is_home() || is_tag()) && 'post' == get_post_type();
+}

@@ -1,48 +1,109 @@
 <?php
 
-// Hook to initialize theme setup
-add_action('after_setup_theme', 'vicso_theme_setup');
+/**
+ * smplfy functions and definitions
+ *
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ *
+ * @package smplfy
+*/
 
-function vicso_theme_setup()
-{
-    // Load theme textdomain for translations
-    load_theme_textdomain('vicso', get_template_directory() . '/languages');
+define("THEME_URI", get_template_directory_uri());
+define("THEME_DIR", get_template_directory());
+const THEME_NAME = 'smplfy';
+const S_VERSION = "1.0.0";
 
-    // Add theme support for various features
-    add_theme_support('html5', array('search-form', 'comment-form', 'comment-list', 'gallery', 'caption'));
-    add_theme_support('customize-selective-refresh-widgets');
-    add_theme_support('post-thumbnails');
+/**
+ * Sets up theme defaults and registers support for various WordPress features.
+ *
+ * Note that this function is hooked into the after_setup_theme hook, which
+ * runs before the init hook. The init hook is too late for some features, such
+ * as indicating support for post thumbnails.
+ */
+function smplfy_setup() {
+	/*
+		* Make theme available for translation.
+		* Translations can be filed in the /languages/ directory.
+		* If you're building a theme based on smplfy, use a find and replace
+		* to change 'smplfy' to the name of your theme in all the template files.
+		*/
+	load_theme_textdomain( 'smplfy', get_template_directory() . '/languages' );
 
-    // Register custom image sizes
-    add_image_size('full-thumbnail', 2000, 9999, true); // No cropping, keep ratio
-    add_image_size('container-thumbnail', 1404, 9999, true);
-    add_image_size('half-container-thumbnail', 640, 9999, true);
+	// Add default posts and comments RSS feed links to head.
+	add_theme_support( 'automatic-feed-links' );
 
-    // Register navigation menus
-    register_nav_menus(array(
-        'primary' => __('Primary Navigation', 'vicso'),
-        'footer_menu' => __('Footer Navigation', 'vicso'),
-    ));
+	/*
+		* Let WordPress manage the document title.
+		* By adding theme support, we declare that this theme does not use a
+		* hard-coded <title> tag in the document head, and expect WordPress to
+		* provide it for us.
+		*/
+	add_theme_support( 'title-tag' );
+
+	/*
+		* Enable support for Post Thumbnails on posts and pages.
+		*
+		* @link https://developer.wordpress.org/themes/functionality/featured-images-post-thumbnails/
+		*/
+	add_theme_support( 'post-thumbnails' );
+
+	// This theme uses wp_nav_menu() in one location.
+	register_nav_menus(
+		array(
+			'menu-1' => esc_html__( 'Primary', 'smplfy' ),
+		)
+	);
+
+	/*
+		* Switch default core markup for search form, comment form, and comments
+		* to output valid HTML5.
+		*/
+	add_theme_support(
+		'html5',
+		array(
+			'search-form',
+			'comment-form',
+			'comment-list',
+			'gallery',
+			'caption',
+			'style',
+			'script',
+		)
+	);
+
+	// Set up the WordPress core custom background feature.
+	add_theme_support(
+		'custom-background',
+		apply_filters(
+			'smplfy_custom_background_args',
+			array(
+				'default-color' => 'ffffff',
+				'default-image' => '',
+			)
+		)
+	);
+
+	/**
+	 * Add support for core custom logo.
+	 *
+	 * @link https://codex.wordpress.org/Theme_Logo
+	 */
+	add_theme_support(
+		'custom-logo',
+		array(
+			'height'      => 250,
+			'width'       => 250,
+			'flex-width'  => true,
+			'flex-height' => true,
+		)
+	);
 }
+add_action( 'after_setup_theme', 'smplfy_setup' );
 
-// Add custom data attributes to <a> tag in menu
-add_filter('nav_menu_link_attributes', 'vicso_add_menu_data_attributes', 10, 3);
-
-function vicso_add_menu_data_attributes($atts, $item, $args)
-{
-    $data_target = get_field('data_target', $item); // ACF custom field for menu item
-    if ($data_target) {
-        $atts['data-target'] = esc_attr($data_target);
-    }
-    return $atts;
-}
 
 // Enqueue scripts and styles
 require_once get_template_directory() . '/inc/enqueue.php';
 
 // Load additional theme functions
 require_once get_template_directory() . '/inc/theme_function.php';
-
-// Load custom post type definitions
-require_once get_template_directory() . '/inc/custom_post_type.php';
 
