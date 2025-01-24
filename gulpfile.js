@@ -1,78 +1,137 @@
+// Импортируем необходимые модули
 const { src, dest, parallel, series, watch } = require('gulp');
 const browserSync = require('browser-sync').create();
 const concat = require('gulp-concat');
-const uglify = require('gulp-uglify-es').default;
-const sass = require('gulp-sass')(require('sass'));
+const terser = require('gulp-terser'); // Заменили gulp-uglify-es на gulp-terser
+const sass = require('gulp-sass')(require('sass')); // Используем Dart Sass
 const autoprefixer = require('gulp-autoprefixer');
-const cleancss = require('gulp-clean-css');
+const cleanCSS = require('gulp-clean-css');
 const plumber = require('gulp-plumber');
 const gulpIf = require('gulp-if');
-const cached = require('gulp-cached');
-const remember = require('gulp-remember');
+const del = require('del'); // Для очистки директорий
+const notify = require('gulp-notify'); // Для уведомлений об ошибках
 
+// Определяем, является ли среда продакшеном
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Define the preprocessor used (e.g., 'sass' or 'scss')
-const preprocessor = 'sass'; // Use 'scss' if your project uses SCSS files
+// Пути к файлам
+const paths = {
+    scripts: {
+        src: [
+            'node_modules/swiper/swiper-bundle.min.js',
+            'node_modules/glightbox/dist/js/glightbox.js',
+            'js/app.js' // Путь к вашим JS файлам
+        ],
+        dest: 'js'
+    },
+    styles: {
+        src: [
+            'node_modules/bootstrap/dist/css/bootstrap-grid.min.css', // Bootstrap grid CSS
+            'node_modules/swiper/swiper-bundle.min.css', // Swiper CSS
+            'css/sass/main.sass' // Ваш основной Sass файл (замените на .scss, если используете SCSS)
+        ],
+        dest: 'css'
+    },
+    php: {
+        src: '**/*.php'
+    }
+};
 
-// BrowserSync configuration for live reloading
-function browsersync() {
+// Задача очистки скомпилированных файлов
+function clean() {
+    return del(['js/app.min.js', 'css/app.min.css']);
+}
+
+// Задача для обработки скриптов
+function scripts() {
+    return src(paths.scripts.src, { sourcemaps: !isProduction })
+        .pipe(plumber({
+            errorHandler: notify.onError({
+                title: "Gulp Scripts Error",
+                message: "<%= error.message %>"
+            })
+        }))
+        .pipe(concat('app.min.js'))
+        .pipe(gulpIf(isProduction, terser()))
+        .pipe(dest(paths.scripts.dest, { sourcemaps: '.' }))
+        .pipe(browserSync.stream());
+}
+
+// Задача для обработки стилей
+function styles() {
+    return src(paths.styles.src, { sourcemaps: !isProduction })
+        .pipe(plumber({
+            errorHandler: notify.onError({
+                title: "Gulp Styles Error",
+                message: "<%= error.message %>"
+            })
+        }))
+        .pipe(sass({
+            outputStyle: 'expanded' // Можно изменить на 'compressed' для продакшен
+        }))
+        .pipe(concat('app.min.css'))
+        .pipe(autoprefixer({
+            overrideBrowserslist: ['last 10 versions'],
+            grid: true
+        }))
+        .pipe(gulpIf(isProduction, cleanCSS({
+            level: {
+                1: {
+                    specialComments: 0
+                }
+            }
+        })))
+        .pipe(dest(paths.styles.dest, { sourcemaps: '.' }))
+        .pipe(browserSync.stream());
+}
+
+// Задача для запуска Browsersync
+function browsersyncServe(cb) {
     browserSync.init({
         proxy: {
-            target: "http://localhost:8000/", // Adjust this to your local dev server URL
+            target: "http://localhost/wordpress/", // Ваш локальный сервер
             ws: true
         },
         notify: false,
-        online: true
+        online: true,
+        open: false // Отключаем автоматическое открытие браузера
     });
+    cb();
 }
 
-// Scripts task - compiles, concatenates, and optionally minifies JS
-function scripts() {
-    return src([
-        'node_modules/swiper/swiper-bundle.min.js',
-        'node_modules/glightbox/dist/js/glightbox.js',
-        'js/app.js' // Adjusted to relative path within the theme folder
-    ])
-    .pipe(plumber()) // Prevents pipe breaking caused by errors
-    .pipe(cached('scripts')) // Cache the scripts for faster recompiling
-    .pipe(remember('scripts')) // Ensures all files are passed
-    .pipe(concat('app.min.js')) // Concatenate into one file
-    .pipe(gulpIf(isProduction, uglify())) // Minify only if in production
-    .pipe(dest('js')) // Output the JS file in your theme's js folder
-    .pipe(browserSync.stream()); // Inject changes without a full reload
+// Задача для перезагрузки Browsersync
+function browsersyncReload(cb) {
+    browserSync.reload();
+    cb();
 }
 
-// Styles task - compiles, concatenates, and optionally minifies CSS
-function styles() {
-    return src([
-        'node_modules/bootstrap/dist/css/bootstrap-grid.min.css', // Bootstrap grid CSS
-        'node_modules/swiper/swiper-bundle.min.css', // Swiper CSS
-        'css/' + preprocessor + '/main.' + preprocessor // Your main Sass/SCSS file
-    ])
-    .pipe(plumber()) // Prevents pipe breaking
-    .pipe(sass()) // Compile Sass/SCSS to CSS
-    .pipe(concat('app.min.css')) // Concatenate into one file
-    .pipe(autoprefixer({ overrideBrowserslist: ['last 10 versions'], grid: true })) // Add vendor prefixes
-    .pipe(gulpIf(isProduction, cleancss({ level: { 1: { specialComments: 0 } } }))) // Minify only if in production
-    .pipe(dest('css')) // Output the CSS file in your theme's css folder
-    .pipe(browserSync.stream()); // Inject changes without a full reload
-}
-
-// Watcher task - monitors changes and triggers respective tasks
+// Задача наблюдения за файлами
 function startwatch() {
-    // Watch JS files and trigger scripts task
     watch(['js/**/*.js', '!js/**/*.min.js'], scripts);
-
-    // Watch Sass/SCSS files and trigger styles task
-    watch(['css/sass/*.sass'], styles).on("change", browserSync.reload);
-
-    // Watch PHP files and trigger browser reload on changes
-    watch(['*.php']).on("change", browserSync.reload);
+    watch(['css/sass/**/*.{sass,scss}'], styles);
+    watch(paths.php.src, browsersyncReload);
 }
 
-// Define tasks
-exports.browsersync = browsersync;
+// Задача по умолчанию для разработки
+const dev = series(
+    clean,
+    parallel(styles, scripts),
+    browsersyncServe,
+    startwatch
+);
+
+// Задача для продакшена
+const build = series(
+    clean,
+    parallel(styles, scripts)
+);
+
+// Экспортируем задачи
+exports.clean = clean;
 exports.scripts = scripts;
 exports.styles = styles;
-exports.default = parallel(styles, scripts, browsersync, startwatch);
+exports.browsersync = browsersyncServe;
+exports.watch = startwatch;
+exports.dev = dev;
+exports.build = build;
+exports.default = dev;

@@ -4,6 +4,8 @@
   "description": "This is the gulp starter kit for WordPress theme and plugin development purposes.",
   "main": "index.js",
   "scripts": {
+    "dev": "gulp",
+    "build": "cross-env NODE_ENV=production gulp build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -13,7 +15,7 @@
   "author": "VICSO",
   "license": "ISC",
   "devDependencies": {
-    "browser-sync": "^2.29.3",
+    "browser-sync": "^3.0.3",
     "gulp": "^4.0.2",
     "gulp-autoprefixer": "^8.0.0",
     "gulp-cached": "^1.1.1",
@@ -26,12 +28,12 @@
     "gulp-sass": "^5.1.0",
     "gulp-uglify-es": "^2.0.0",
     "jquery": "^3.7.0",
-    "sass": "^1.77.8"
+    "sass": "^1.83.4"
   },
   "dependencies": {
-    "bootstrap": "^5.3.1",
-    "glightbox": "^3.2.0",
+    "bootstrap": "^5.3.3",
+    "glightbox": "^3.3.1",
     "isotope-layout": "^3.0.6",
-    "swiper": "^10.2.0"
+    "swiper": "^11.2.1"
   }
 }

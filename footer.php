@@ -1,6 +1,10 @@
 </main><!-- main -->
-    <footer id="footer">
-        <h2>Here will be amazing footer</h2>
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer-content"> 
+                
+            </div>
+        </div>
     </footer><!-- footer -->
 </div><!-- wrapper -->
 <?php wp_footer(); ?>
