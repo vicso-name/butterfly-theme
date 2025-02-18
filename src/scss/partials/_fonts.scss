@@ -1,0 +1,37 @@
+/*** Formular ***/
+
+@font-face {
+    font-family: 'Formular';
+    src: url('../../fonts/formular/Formular-Bold.woff2') format('woff2'),
+         url('../../fonts/formular/Formular-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Formular';
+    src: url('../../fonts/formular/Formular-Black.woff2') format('woff2'),
+         url('../../fonts/formular/Formular-Black.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Formular';
+    src: url('../../fonts/formular/Formular-Medium.woff2') format('woff2'),
+         url('../../fonts/formular/Formular-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Formular';
+    src: url('../../fonts/formular/Formular-Light.woff2') format('woff2'),
+         url('../../fonts/formular/Formular-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
