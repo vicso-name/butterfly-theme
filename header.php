@@ -13,4 +13,5 @@
     <div id="wrapper">
         <header id="header">
             <h1>Here will be amazing header</h1>
+        </header>
             <main>

@@ -165,6 +165,7 @@ add_filter('jpeg_quality', function($arg){return 100;});
 
 
 // Disable WordPress' automatic image scaling feature
+
 add_filter( 'big_image_size_threshold', '__return_false' );
 
 
@@ -214,4 +215,104 @@ add_filter( 'rank_math/frontend/breadcrumb/html', function( $html, $crumbs, $cla
 
 function is_blog () {
     return ( is_archive() || is_author() || is_category() || is_home() || is_tag()) && 'post' == get_post_type();
+}
+
+/**  Disable Comments */
+
+if(get_field('disable_comments','option')){
+
+    add_action('admin_init', function () {
+
+        global $pagenow;
+
+        if ($pagenow === 'edit-comments.php') {
+            wp_redirect(admin_url());
+            exit;
+        }
+
+        remove_meta_box('dashboard_recent_comments', 'dashboard', 'normal');
+
+        foreach (get_post_types() as $post_type) {
+            if (post_type_supports($post_type, 'comments')) {
+                remove_post_type_support($post_type, 'comments');
+                remove_post_type_support($post_type, 'trackbacks');
+            }
+        }
+    });
+
+    add_filter('comments_open', '__return_false', 20, 2);
+    add_filter('pings_open', '__return_false', 20, 2);
+
+    add_filter('comments_array', '__return_empty_array', 10, 2);
+
+    add_action('admin_menu', function () {
+        remove_menu_page('edit-comments.php');
+    });
+
+    add_action('init', function () {
+        if (is_admin_bar_showing()) {
+            remove_action('admin_bar_menu', 'wp_admin_bar_comments_menu', 60);
+
+        }
+    });
+    function remove_menu_items(){
+        remove_submenu_page( 'options-general.php', 'options-discussion.php' );
+    }
+    add_action( 'admin_menu', 'remove_menu_items', 999 );
+
+}
+
+/** Hide default widgets */
+
+if(get_field('disable_widgets','option')){
+	function remove_dashboard_widgets() {
+		global $wp_meta_boxes;
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_activity']);
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_right_now']);
+		unset($wp_meta_boxes['dashboard']['side']['core']['dashboard_quick_press']);
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_incoming_links']);
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_plugins']);
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_recent_drafts']);
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_recent_comments']);
+		unset($wp_meta_boxes['dashboard']['side']['core']['dashboard_primary']);
+		unset($wp_meta_boxes['dashboard']['side']['core']['dashboard_secondary']);
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_site_health']);
+		unset($wp_meta_boxes['dashboard']['normal']['core']['dashboard_php_nag']);
+	}
+	add_action('wp_dashboard_setup', 'remove_dashboard_widgets' );
+	remove_action( 'try_gutenberg_panel', 'wp_try_gutenberg_panel' );
+	add_action('wp_dashboard_setup', 'remove_wpseo_dashboard_overview' );
+	function remove_wpseo_dashboard_overview() {
+		remove_meta_box( 'wpseo-dashboard-overview', 'dashboard', 'side' );
+	}
+    function remove_php_nag() {
+        remove_meta_box( 'dashboard_php_nag', 'dashboard', 'normal' );
+    }
+    add_action( 'wp_dashboard_setup', 'remove_php_nag' );
+}else{
+    function smplfy_widgets_init() {
+        register_sidebar(
+            array(
+                'name'          => esc_html__( 'Sidebar', 'smplfy' ),
+                'id'            => 'sidebar-1',
+                'description'   => esc_html__( 'Add widgets here.', 'smplfy' ),
+                'before_widget' => '<section id="%1$s" class="widget %2$s">',
+                'after_widget'  => '</section>',
+                'before_title'  => '<h2 class="widget-title">',
+                'after_title'   => '</h2>',
+            )
+        );
+    }
+    add_action( 'widgets_init', 'smplfy_widgets_init' );
+}
+
+/**  Disable Jquery */
+
+if(get_field('disable_jquery','option')){
+    function disable_jquery() {
+        if (!is_admin()) { 
+            wp_deregister_script('jquery'); 
+        }
+    }
+    add_action('wp_enqueue_scripts', 'disable_jquery');
 }
