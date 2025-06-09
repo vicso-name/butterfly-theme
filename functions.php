@@ -101,9 +101,6 @@ function smplfy_setup() {
 add_action( 'after_setup_theme', 'smplfy_setup' );
 
 
-// Enqueue scripts and styles
 require_once get_template_directory() . '/inc/enqueue.php';
-
-// Load additional theme functions
+require_once get_template_directory() . '/inc/acf_blocks.php';
 require_once get_template_directory() . '/inc/theme_function.php';
-
