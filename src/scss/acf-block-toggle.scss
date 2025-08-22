@@ -1,0 +1,18 @@
+.acf-block-toggle {
+  background: #f0f0f0;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: bold;
+  border-left: 4px solid #007cba;
+  margin-bottom: 0;
+  user-select: none;
+}
+
+.acf-block-toggle::after {
+  content: " ▼";
+  float: right;
+}
+
+.acf-expanded .acf-block-toggle::after {
+  content: " ▲";
+}

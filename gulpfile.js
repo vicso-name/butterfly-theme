@@ -18,7 +18,7 @@ const paths = {
   src: 'src',
   build: 'build',
   scripts: {
-    main: 'src/js/general.js',
+    main: 'src/js/**/*.js',
     sections: 'src/js/sections/**/*.js',
     dest: 'build/js',
     destSections: 'build/js/sections'
@@ -26,7 +26,7 @@ const paths = {
   styles: {
     main: 'src/scss/style.scss',
     sections: 'src/scss/sections/**/*.scss',
-    admin: 'src/scss/admin-style.scss',
+    admin: 'src/scss/**/*.scss',
     dest: 'build/css',
     destSections: 'build/css/sections',
     destAdmin: 'build/css'
