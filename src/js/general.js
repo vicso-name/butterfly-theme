@@ -1,95 +1,104 @@
-window.addEventListener("DOMContentLoaded", () => {
+/**
+ * ===========================================================
+ * General Frontend Interactions
+ * ===========================================================
+ * Organized into small, readable functions
+ * - Header toggle
+ * - Smooth scroll
+ * - Replace <img.svg> with inline <svg>
+ * - AOS-style fade-up animations
+ */
 
-    // Heder contact
-    document.querySelectorAll('.menu-toggle').forEach(function(toggle) {
-        toggle.addEventListener('click', function() {
-            const parent = this.parentNode; 
-            parent.classList.toggle('activ'); 
-    
-            const navigationBox = parent.querySelector('.navigation-box'); 
-            if (navigationBox) {
-                if (navigationBox.style.display === 'block') {
-                    navigationBox.style.display = 'none'; 
-                } else {
-                    navigationBox.style.display = 'block'; 
-                }
-            }
-        });
-    });
-	
-	/** SCROLL TO SECTION **/
-	document.querySelectorAll('a[href^="#"]').forEach(link => {
-		const btnId = link.getAttribute('href').slice(1); 
-	  
-		link.addEventListener("click", function(e) {
-		  e.preventDefault();
-	  
-		  const targetSection = document.getElementById(btnId);
-		  if (targetSection) {
-			targetSection.scrollIntoView({ behavior: "smooth" });
-		  }
-		});
-	  });
-
-
-	/** Image to SVG **/
-	document.querySelectorAll("img.svg").forEach(function (img) {
-		var imgID = img.id;
-		var imgClass = img.className;
-		var imgURL = img.src;
-	
-		fetch(imgURL)
-			.then(function (response) {
-				return response.text();
-			})
-			.then(function (data) {
-
-				var parser = new DOMParser();
-				var xmlDoc = parser.parseFromString(data, "image/svg+xml");
-				var svg = xmlDoc.querySelector("svg");
-	
-				if (!svg) {
-					console.error("SVG not found in the file:", imgURL);
-					return;
-				}
-
-				if (imgID) {
-					svg.setAttribute("id", imgID);
-				}
-	
-				if (imgClass) {
-					svg.setAttribute("class", imgClass + " replaced-svg");
-				}
-	
-				svg.removeAttribute("xmlns:a");
-	
-				if (!svg.hasAttribute("viewBox") && svg.hasAttribute("height") && svg.hasAttribute("width")) {
-					svg.setAttribute(
-						"viewBox",
-						"0 0 " + svg.getAttribute("width") + " " + svg.getAttribute("height")
-					);
-				}
-				img.replaceWith(svg);
-			})
-			.catch(function (error) {
-				console.error("Error fetching SVG:", error);
-			});
-	});
-
-    // Animation scroll
-    function onEntry(entry) {
-        entry.forEach(change => {
-        if (change.isIntersecting) {
-            change.target.classList.add('aos-animate');
-        }
-        });
-    }
-    let options = { threshold: [0.25] };
-    let observer = new IntersectionObserver(onEntry, options);
-    let elements = document.querySelectorAll('[data-aos="fade-up"]');
-    for (let elm of elements) {
-        observer.observe(elm);
-    }
-
-
+document.addEventListener("DOMContentLoaded", () => {
+  initHeaderToggle();
+  initSmoothScroll();
+  replaceImagesWithInlineSVGs();
 });
+
+/* ===========================================================
+ * 1. Header Contact Toggle
+ * =========================================================== */
+function initHeaderToggle() {
+  const toggles = document.querySelectorAll(".menu-toggle");
+
+  if (!toggles.length) return;
+
+  toggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const parent = toggle.parentNode;
+      parent.classList.toggle("activ");
+
+      const navigationBox = parent.querySelector(".navigation-box");
+      if (navigationBox) {
+        const isVisible = navigationBox.style.display === "block";
+        navigationBox.style.display = isVisible ? "none" : "block";
+      }
+    });
+  });
+}
+
+/* ===========================================================
+ * 2. Smooth Scroll to Section
+ * =========================================================== */
+function initSmoothScroll() {
+  const links = document.querySelectorAll('a[href^="#"]');
+  if (!links.length) return;
+
+  links.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      const targetId = link.getAttribute("href").slice(1);
+      const targetEl = document.getElementById(targetId);
+
+      if (!targetEl) return;
+      e.preventDefault();
+      targetEl.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+}
+
+/* ===========================================================
+ * 3. Convert <img class="svg"> → inline <svg>
+ * =========================================================== */
+function replaceImagesWithInlineSVGs() {
+  const svgImages = document.querySelectorAll("img.svg");
+  if (!svgImages.length) return;
+
+  svgImages.forEach((img) => {
+    const imgURL = img.src;
+
+    fetch(imgURL)
+      .then((res) => res.text())
+      .then((data) => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(data, "image/svg+xml");
+        const svg = xmlDoc.querySelector("svg");
+
+        if (!svg) {
+          console.error("SVG not found in:", imgURL);
+          return;
+        }
+
+        // Copy ID and class
+        if (img.id) svg.id = img.id;
+        if (img.className) svg.classList.add(...img.classList, "replaced-svg");
+
+        // Remove unnecessary attributes
+        svg.removeAttribute("xmlns:a");
+
+        // Add viewBox if missing
+        if (
+          !svg.hasAttribute("viewBox") &&
+          svg.hasAttribute("height") &&
+          svg.hasAttribute("width")
+        ) {
+          svg.setAttribute(
+            "viewBox",
+            `0 0 ${svg.getAttribute("width")} ${svg.getAttribute("height")}`
+          );
+        }
+
+        img.replaceWith(svg);
+      })
+      .catch((err) => console.error("Error fetching SVG:", err));
+  });
+}
