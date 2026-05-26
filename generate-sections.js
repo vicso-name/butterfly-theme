@@ -85,6 +85,11 @@ if (!fs.existsSync(ACF_FILE)) {
 
 const acfContent = fs.readFileSync(ACF_FILE, 'utf8');
 
+// Derive the PHP function prefix from what's actually in acf_blocks.php so this
+// string stays correct after npm run setup renames smplfy_ to {slug}_
+const prefixMatch = acfContent.match(/function\s+([a-z][a-z0-9_]*)_enqueue_detected_block_assets/);
+const phpPrefix   = prefixMatch ? prefixMatch[1] + '_' : 'smplfy_';
+
 // Check if already registered (active or commented out)
 if (new RegExp(`['"]${sectionName}['"]`).test(acfContent)) {
     console.error(`Error: "${sectionName}" already appears in inc/acf_blocks.php — aborting.`);
@@ -141,28 +146,13 @@ const scssContent =
 
 const phpContent =
 `<?php
-$title       = get_field('title');
-$description = get_field('description');
-$button_text = get_field('button_text');
-$button_url  = get_field('button_url');
+/**
+ * Section: ${sectionName}
+ */
 ?>
 <section class="${cssClass}">
     <div class="${cssClass}__container container">
         <div class="${cssClass}__content">
-
-            <?php if ($title) : ?>
-                <h2 class="${cssClass}__title"><?php echo esc_html($title); ?></h2>
-            <?php endif; ?>
-
-            <?php if ($description) : ?>
-                <p class="${cssClass}__description"><?php echo esc_html($description); ?></p>
-            <?php endif; ?>
-
-            <?php if ($button_text && $button_url) : ?>
-                <a href="<?php echo esc_url($button_url); ?>" class="${cssClass}__button button">
-                    <?php echo esc_html($button_text); ?>
-                </a>
-            <?php endif; ?>
 
         </div>
     </div>
@@ -269,7 +259,7 @@ console.log(`  2. Export the field group to JSON if you use ACF local JSON`);
 console.log(`  3. Add the section to a page template if needed`);
 console.log('');
 console.log('  Note: section CSS/JS is enqueued automatically — no edits to inc/enqueue.php');
-console.log('        are required. barvy_enqueue_detected_block_assets() reads $blocks at runtime.');
+console.log(`        are required. ${phpPrefix}enqueue_detected_block_assets() reads $blocks at runtime.`);
 console.log('');
 console.log('  ⚠  Known build quirk: src/js/**/*.js matches src/js/sections/, so any .js');
 console.log('     created here will be compiled twice by Gulp (once to build/js/, once to');
