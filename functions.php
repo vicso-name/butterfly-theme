@@ -104,3 +104,4 @@ add_action( 'after_setup_theme', 'smplfy_setup' );
 require_once get_template_directory() . '/inc/enqueue.php';
 require_once get_template_directory() . '/inc/acf_blocks.php';
 require_once get_template_directory() . '/inc/theme_function.php';
+require_once get_template_directory() . '/inc/theme_settings.php';
