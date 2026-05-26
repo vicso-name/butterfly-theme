@@ -1,5 +1,6 @@
 # Ignore node modules and build directories
 **/node_modules/
+build/
 
 # Ignore environment and system files
 Thumbs.db
