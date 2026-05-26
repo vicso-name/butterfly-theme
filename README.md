@@ -26,6 +26,8 @@ npm run setup
 
 > If `scripts/setup.mjs` does not exist, setup has already been run on this project — skip straight to Development.
 
+> **Deployment via git?** Remove `build/` from `.gitignore` so compiled assets are tracked and available on the server after `git pull`.
+
 ---
 
 ## Development
