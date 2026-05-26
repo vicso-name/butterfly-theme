@@ -133,13 +133,14 @@ const scssContent =
 // =============================================================
 
 .${cssClass} {
+    // styles
 
     &__container {
-
+        // styles
     }
 
     &__content {
-
+        // styles
     }
 }
 `;

@@ -9,6 +9,7 @@
     "color-hex-length": null,
     "scss/comment-no-empty": null,
     "scss/double-slash-comment-empty-line-before": null,
-    "scss/dollar-variable-colon-space-after": null
+    "scss/dollar-variable-colon-space-after": null,
+    "selector-class-pattern": null
   }
 }
