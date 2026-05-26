@@ -13,22 +13,22 @@ defined('ABSPATH') || exit;
 /**
  * Return theme URI (child theme aware).
  */
-function btf_theme_uri(): string {
+function smplfy_theme_uri(): string {
     return get_stylesheet_directory_uri();
 }
 
 /**
  * Return theme dir (child theme aware).
  */
-function btf_theme_dir(): string {
+function smplfy_theme_dir(): string {
     return get_stylesheet_directory();
 }
 
 /**
  * Smart asset version: filemtime if exists, else S_VERSION or theme version.
  */
-function btf_asset_ver(string $rel): string {
-    $abs = btf_theme_dir() . '/' . ltrim($rel, '/');
+function smplfy_asset_ver(string $rel): string {
+    $abs = smplfy_theme_dir() . '/' . ltrim($rel, '/');
     if (file_exists($abs)) {
         return (string) filemtime($abs);
     }
@@ -39,16 +39,16 @@ function btf_asset_ver(string $rel): string {
 /**
  * Build asset URL from relative path.
  */
-function btf_asset_url(string $rel): string {
-    return btf_theme_uri() . '/' . ltrim($rel, '/');
+function smplfy_asset_url(string $rel): string {
+    return smplfy_theme_uri() . '/' . ltrim($rel, '/');
 }
 
 /**
  * Should we load Swiper on this request?
- * You can override with: add_filter('btf_load_swiper', '__return_false');
+ * You can override with: add_filter('smplfy_load_swiper', '__return_false');
  */
-function btf_should_load_swiper(): bool {
-    return (bool) apply_filters('btf_load_swiper', true);
+function smplfy_should_load_swiper(): bool {
+    return (bool) apply_filters('smplfy_load_swiper', true);
 }
 
 /* -----------------------------------------------------------
@@ -57,9 +57,9 @@ function btf_should_load_swiper(): bool {
 add_action('admin_enqueue_scripts', function () {
     wp_enqueue_style(
         'btf-admin-styles',
-        btf_asset_url('build/css/admin-styles.min.css'),
+        smplfy_asset_url('build/css/admin-styles.min.css'),
         [],
-        btf_asset_ver('build/css/admin-styles.min.css')
+        smplfy_asset_ver('build/css/admin-styles.min.css')
     );
 });
 
@@ -73,40 +73,40 @@ add_action('admin_enqueue_scripts', function () {
 add_action('wp_enqueue_scripts', function () {
 
     // 0) Optional: load style.css only if you actually use it.
-    // If your theme’s design is entirely in build/css/style.min.css, you can safely skip it.
-    // wp_enqueue_style('btf-style', get_stylesheet_uri(), [], btf_asset_ver('style.css'));
+    // If your theme's design is entirely in build/css/style.min.css, you can safely skip it.
+    // wp_enqueue_style('btf-style', get_stylesheet_uri(), [], smplfy_asset_ver('style.css'));
     // wp_style_add_data('btf-style', 'rtl', 'replace');
 
     // 1) Swiper (conditionally)
-    if (btf_should_load_swiper()) {
+    if (smplfy_should_load_swiper()) {
         wp_enqueue_style(
             'btf-swiper-style',
-            btf_asset_url('assets/swiper/swiper-bundle.min.css'),
+            smplfy_asset_url('assets/swiper/swiper-bundle.min.css'),
             [],
-            btf_asset_ver('assets/swiper/swiper-bundle.min.css')
+            smplfy_asset_ver('assets/swiper/swiper-bundle.min.css')
         );
     }
 
     // 2) Main theme CSS (make it depend on swiper-style if present)
     $style_deps = [];
-    if (btf_should_load_swiper()) $style_deps[] = 'btf-swiper-style';
+    if (smplfy_should_load_swiper()) $style_deps[] = 'btf-swiper-style';
 
     wp_enqueue_style(
         'btf-main-styles',
-        btf_asset_url('build/css/style.min.css'),
+        smplfy_asset_url('build/css/style.min.css'),
         $style_deps,
-        btf_asset_ver('build/css/style.min.css')
+        smplfy_asset_ver('build/css/style.min.css')
     );
 
     // 3) Scripts
     // Swiper JS (conditionally)
     $script_deps = [];
-    if (btf_should_load_swiper()) {
+    if (smplfy_should_load_swiper()) {
         wp_enqueue_script(
             'btf-swiper-script',
-            btf_asset_url('assets/swiper/swiper-bundle.min.js'),
+            smplfy_asset_url('assets/swiper/swiper-bundle.min.js'),
             [],
-            btf_asset_ver('assets/swiper/swiper-bundle.min.js'),
+            smplfy_asset_ver('assets/swiper/swiper-bundle.min.js'),
             true // footer
         );
         $script_deps[] = 'btf-swiper-script';
@@ -114,9 +114,9 @@ add_action('wp_enqueue_scripts', function () {
 
     wp_enqueue_script(
         'btf-main-scripts',
-        btf_asset_url('build/js/general.min.js'),
+        smplfy_asset_url('build/js/general.min.js'),
         $script_deps,
-        btf_asset_ver('build/js/general.min.js'),
+        smplfy_asset_ver('build/js/general.min.js'),
         true
     );
 
@@ -129,18 +129,18 @@ add_action('enqueue_block_editor_assets', function () {
     // Editor JS
     wp_enqueue_script(
         'btf-editor-scripts',
-        btf_asset_url('build/js/admin-scripts.min.js'),
+        smplfy_asset_url('build/js/admin-scripts.min.js'),
         ['wp-blocks', 'wp-dom-ready', 'wp-edit-post'],
-        btf_asset_ver('build/js/admin-scripts.min.js'),
+        smplfy_asset_ver('build/js/admin-scripts.min.js'),
         true
     );
 
     // Editor CSS
     wp_enqueue_style(
         'btf-editor-styles',
-        btf_asset_url('build/css/acf-block-toggle.min.css'),
+        smplfy_asset_url('build/css/acf-block-toggle.min.css'),
         ['wp-edit-blocks'],
-        btf_asset_ver('build/css/acf-block-toggle.min.css')
+        smplfy_asset_ver('build/css/acf-block-toggle.min.css')
     );
 });
 
@@ -159,8 +159,8 @@ add_action('wp_default_scripts', function ($scripts) {
 });
 
 /**
- * If you don’t use core block library CSS (classic theme) you can dequeue it.
- * Be careful: if you rely on block styles, don’t remove them.
+ * If you don't use core block library CSS (classic theme) you can dequeue it.
+ * Be careful: if you rely on block styles, don't remove them.
  */
 // add_action('wp_enqueue_scripts', function () {
 //     wp_dequeue_style('wp-block-library');

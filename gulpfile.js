@@ -11,6 +11,9 @@ const notify = require('gulp-notify');
 const rename = require('gulp-rename');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
+const util = require('util');
+const execAsync = util.promisify(exec);
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -18,7 +21,7 @@ const paths = {
   src: 'src',
   build: 'build',
   scripts: {
-    main: 'src/js/**/*.js',
+    main: 'src/js/*.js',
     sections: 'src/js/sections/**/*.js',
     dest: 'build/js',
     destSections: 'build/js/sections'
@@ -26,7 +29,8 @@ const paths = {
   styles: {
     main: 'src/scss/style.scss',
     sections: 'src/scss/sections/**/*.scss',
-    admin: 'src/scss/**/*.scss',
+    admin: 'src/scss/admin-style.scss',
+    blockToggle: 'src/scss/acf-block-toggle.scss',
     dest: 'build/css',
     destSections: 'build/css/sections',
     destAdmin: 'build/css'
@@ -99,15 +103,6 @@ function getFontWeight(filename) {
   return 400;
 }
 
-function getFontWeight(filename) {
-  if (filename.toLowerCase().includes('bold')) return 700;
-  if (filename.toLowerCase().includes('semibold')) return 600;
-  if (filename.toLowerCase().includes('medium')) return 500;
-  if (filename.toLowerCase().includes('light')) return 300;
-  if (filename.toLowerCase().includes('extralight')) return 200;
-  return 400;
-}
-
 function scriptsMain() {
   return src(paths.scripts.main)
     .pipe(plumber({ errorHandler: notify.onError("Ошибка в Scripts Main: <%= error.message %>") }))
@@ -130,10 +125,21 @@ function stylesAdmin() {
   return src(paths.styles.admin)
     .pipe(plumber({ errorHandler: notify.onError("Ошибка в Styles Admin: <%= error.message %>") }))
     .pipe(sass({ outputStyle: 'expanded' }))
-    .pipe(rename({ suffix: '.min' }))
+    .pipe(rename({ basename: 'admin-styles', suffix: '.min' }))
     .pipe(autoprefixer({ overrideBrowserslist: ['last 10 versions'], grid: true }))
     .pipe(gulpIf(isProduction, cleanCSS({ level: { 1: { specialComments: 0 } } })))
     .pipe(dest(paths.styles.destAdmin))
+    .pipe(browserSync.stream());
+}
+
+function stylesBlockToggle() {
+  return src(paths.styles.blockToggle)
+    .pipe(plumber({ errorHandler: notify.onError("Error in Styles Block Toggle: <%= error.message %>") }))
+    .pipe(sass({ outputStyle: 'expanded' }))
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(autoprefixer({ overrideBrowserslist: ['last 10 versions'], grid: true }))
+    .pipe(gulpIf(isProduction, cleanCSS({ level: { 1: { specialComments: 0 } } })))
+    .pipe(dest(paths.styles.dest))
     .pipe(browserSync.stream());
 }
 
@@ -181,21 +187,45 @@ function startwatch() {
   watch('src/scss/**/*.scss', stylesMain);
   watch(paths.styles.sections, stylesSections);
   watch(paths.styles.admin, stylesAdmin);
+  watch(paths.styles.blockToggle, stylesBlockToggle);
   watch(paths.scripts.main, scriptsMain);
   watch(paths.scripts.sections, scriptsSections);
   watch(paths.php.src, browsersyncReload);
 }
 
-const scripts = parallel(scriptsMain, scriptsSections);
-const styles = parallel(stylesMain, stylesSections, stylesAdmin);
+async function lintScss() {
+  try {
+    const { stdout } = await execAsync('npx stylelint "src/scss/**/*.scss"', { cwd: __dirname });
+    if (stdout) process.stdout.write(stdout);
+  } catch (err) {
+    if (err.stdout) process.stdout.write(err.stdout);
+    throw new Error('SCSS lint failed — run npm run lint:scss for details');
+  }
+}
 
-const build = series(clean, parallel(styles, scripts, copyFonts, generateFontsCSS));
+async function lintJs() {
+  try {
+    const { stdout } = await execAsync('npx eslint "src/js/**/*.js"', { cwd: __dirname });
+    if (stdout) process.stdout.write(stdout);
+  } catch (err) {
+    if (err.stdout) process.stdout.write(err.stdout);
+    throw new Error('JS lint failed — run npm run lint:js for details');
+  }
+}
+
+const lint = parallel(lintScss, lintJs);
+const scripts = parallel(scriptsMain, scriptsSections);
+const styles = parallel(stylesMain, stylesSections, stylesAdmin, stylesBlockToggle);
+
+const build = series(lint, clean, parallel(styles, scripts, copyFonts, generateFontsCSS));
 const dev = series(clean, parallel(styles, scripts), browsersyncServe, startwatch);
 
 exports.clean = clean;
+exports.lint = lint;
 exports.scripts = scripts;
 exports.styles = styles;
 exports.stylesAdmin = stylesAdmin;
+exports.stylesBlockToggle = stylesBlockToggle;
 exports.browsersync = browsersyncServe;
 exports.watch = startwatch;
 exports.copyFonts = copyFonts;
