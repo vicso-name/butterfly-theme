@@ -631,3 +631,106 @@ Use this when creating a block by hand (e.g., without the section generator).
         - No FOUC (if CSS is missing, check build/css/sections/ exists)
         - No console errors
 ```
+
+---
+
+## 6. Field Type Rules
+
+Mandatory conventions for ACF field types and their PHP rendering patterns.
+
+---
+
+### Phone
+
+**ACF field type:** `text`
+
+One field only. Display value shown as-is to the user. Strip all non-digit characters except `+` for the `href`:
+
+```php
+<a href="tel:<?= esc_attr(preg_replace('/[^+\d]/', '', $phone)) ?>">
+    <?= esc_html($phone) ?>
+</a>
+```
+
+The user enters the number in any format in the backend. The template always produces a clean `tel:` link.
+
+---
+
+### Email
+
+**ACF field type:** `email`
+
+Render using WordPress `antispambot()` to protect from scrapers:
+
+```php
+<?php $email = antispambot(get_field('email')); ?>
+<a href="<?= esc_url('mailto:' . $email) ?>">
+    <?= esc_html($email) ?>
+</a>
+```
+
+Never use `type: text` or `type: link` for email addresses.
+
+---
+
+### Links (internal or external)
+
+**ACF field type:** `link` (`return_format: array`)
+
+Returns: `url`, `title`, `target`.
+
+```php
+<?php if ($link) : ?>
+    <a href="<?= esc_url($link['url']) ?>"
+       <?= $link['target'] ? 'target="_blank" rel="noopener"' : '' ?>>
+        <?= esc_html($link['title']) ?>
+    </a>
+<?php endif; ?>
+```
+
+Never use separate `url` (text) + `label` (text) sub-fields for links.
+
+---
+
+### SVG icons
+
+**ACF field type:** `image` (`return_format: array`)
+
+Upload the SVG file through the media library. Render as `<img>` — do not paste raw SVG code into textarea fields.
+
+```php
+<?php if ($icon) : ?>
+    <img src="<?= esc_url($icon['url']) ?>"
+         alt="<?= esc_attr($icon['alt']) ?>"
+         width="<?= esc_attr($icon['width']) ?>"
+         height="<?= esc_attr($icon['height']) ?>"
+         aria-hidden="true">
+<?php endif; ?>
+```
+
+**Exception:** if the SVG must change color via CSS (`fill: currentColor`), use inline SVG via `file_get_contents()` on the local file path. Store as an `image` field, retrieve `$icon['url']`, convert to a local path, then echo the file contents unescaped.
+
+---
+
+### Textarea
+
+**ACF field type:** `textarea`
+
+Always render with `nl2br()` to preserve line breaks:
+
+```php
+<?= nl2br(esc_html($text)) ?>
+```
+
+Never use `wpautop()` for simple text fields — it wraps in `<p>` tags which breaks most layout contexts.
+
+---
+
+### Footer
+
+The footer is always global — it is never a Gutenberg block.
+
+- Fields are registered on the **ACF Options page** (`acf-options-footer`)
+- All `get_field()` calls must pass `'option'` as the second argument
+- The template lives in `footer.php` — never in `template-parts/sections/`
+- CSS and JS are enqueued unconditionally (not via block detection)

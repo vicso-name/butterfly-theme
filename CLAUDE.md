@@ -308,6 +308,8 @@ transition: var(--transition-base);
 
 ## ACF Block Patterns
 
+Field type rules and PHP rendering patterns → docs/acf-block-patterns.md § Field Type Rules
+
 ### Registration (in `inc/acf_blocks.php`)
 
 ```php
